@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 import Header from './components/Header';
 import Play from './components/Game/Play';
@@ -18,23 +19,21 @@ const style = {
   }
 }
 
-class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      route: 'home',
-      cats: [],
-    }
-  }
+const App = () => {
+const [route, setRoute] = useState('home');
+const [cats, setCats] = useState([]);
 
-  componentDidMount() {
-    fetch('https://api.thecatapi.com/v1/breeds', {
+useEffect(() => {
+  
+(async () => {  
+  const response = await axios.get('https://api.thecatapi.com/v1/breeds', {
       headers: {
         'x-api-key': API_KEY,
       }
-    })
-    .then(response => response.json())
-    .then(breeds => breeds.map(breed => { return { 
+    });
+
+  const cats = await response.data.map(breed => {
+    return { 
       name: breed.name,
       id: breed.id,
       info: {
@@ -42,46 +41,43 @@ class App extends Component {
         origin: breed.origin,
         temper: breed.temperament,
         wiki: breed.wikipedia_url,
-      }, 
-    } }))
-    .then(cats => this.setState({ cats }))
-    .catch(error => console.log(error));
+      }
+    }});
+    setCats(cats);
+  })()}, []);
+  
+  const routeChange = (destination) => {
+    setRoute(destination);
   }
   
-  routeChange = (route) => {
-    this.setState({ route });
-  }
-  
-  render() {
     return (
       <div className='App'>
         <Header
-          play={this.routeChange.bind(this, 'play')}
-          home={this.routeChange.bind(this, 'home')}
-          learn={this.routeChange.bind(this, 'learn')}
+          play={routeChange.bind(null, 'play')}
+          home={routeChange.bind(null, 'home')}
+          learn={routeChange.bind(null, 'learn')}
           />
         <ErrorBoundary>
-          {this.state.route === 'home' &&
+          {route === 'home' &&
           <div style={style.home}>
             <h1>Welcome to Cattivating!</h1>
-            <Button onclick={this.routeChange.bind(this, 'play')} text='Play' />
-            <Button onclick={this.routeChange.bind(this, 'learn')} text='Learn' />
+            <Button onclick={routeChange.bind(null, 'play')} text='Play' />
+            <Button onclick={routeChange.bind(null, 'learn')} text='Learn' />
           </div>
           }
 
-          {this.state.route === 'play' &&
-            this.state.cats.length > 0 &&
-            <Play cats={this.state.cats} />
+          {route === 'play' &&
+            cats.length > 0 &&
+            <Play cats={cats} />
           }
 
-          {this.state.route === 'learn' &&
-            this.state.cats.length > 0 &&
-            <Learn cats={this.state.cats} />
+          {route === 'learn' &&
+            cats.length > 0 &&
+            <Learn cats={cats} />
           }
         </ErrorBoundary>
       </div>
     );
-  }
 }
 
 export default App;

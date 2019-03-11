@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 import Pictures from '../Pictures';
-import Button from '../../Button'
+import Button from '../../Button';
 import Loading from '../../Loading';
 import FinalScore from '../FinalScore';
 import Score from '../Score';
@@ -18,114 +19,118 @@ const style = {
   }
 }
 
-class Play extends Component {
-  constructor(props) {
-    super();
-    this.state = {
-      round: 0,
-      rightAnswers: 0,
-      wrongAnswers: 0,
-      cats: props.cats,
-      pictures: [],
-      rightCat: '',
-      wrongCat1: '',
-      wrongCat2: '',
-      answered: false,
-      message: '',
-      timer: function(){}
-    }
+const Play = (props) => {
+  const cats = props.cats;
+  const [round, setRound] = useState(0);
+  const [rightAnswers, setRightAnswers] = useState(0);
+  const [wrongAnswers, setWrongAnswers] = useState(0);
+  const [pictures, setPictures] = useState([]);
+  const [rightCat, setRightCat] = useState('');
+  const [wrongCat1, setWrongCat1] = useState('');
+  const [wrongCat2, setWrongCat2] = useState('');
+  const [answers, setAnswers] = useState([rightCat, wrongCat1, wrongCat2]);
+  const [answered, setAnswered] = useState(false);
+  const [message, setMessage] = useState('');
+  const [timer, setTimer] = useState(function(){});
+
+  useEffect(() =>  {
+    newGame();
+    newRound();    
+  }, []);
+
+  const newGame = () => {
+    setRound(0);
+    setRightAnswers(0);
+    setWrongAnswers(0);
+    setMessage(0);
   }
 
-  componentDidMount() {
-    this.newGame();
-    this.newRound();
-  }
+  const newRound = () => {
+    setRound(round + 1);
+    setPictures([]);
+    setAnswered(false);
+    setMessage('');
 
-  newGame = () => {
-    this.setState({ round: 0, rightAnswers: 0, wrongAnswers: 0, message: '' });
-  }
+    populateAnswers();
 
-  newRound = () => {
-    this.setState({
-      round: this.state.round + 1 ,
-      picture1: '',
-      picture2: '', picture3: '',
-      answered: false,
-      message: '',
-    });
-
-    this.populateAnswers();
-
-    this.setState({
-      timer: setTimeout(() => {
-      this.verifyAnswer('timeout');
-    }, 10000)
-    });
+    setTimer(setTimeout(() => {
+      verifyAnswer('timeout');
+    }, 10000));
   }
   
-  getRandomCat = () => {
-    return this.state.cats[Math.floor(Math.random() * 66)];
-  }
-  
-  populateAnswers = () => {
-    let rightCat = this.getRandomCat();
-    let wrongCat1 = this.getRandomCat();
-    let wrongCat2 = this.getRandomCat();
-    this.setState({ pictures: [] });
-    this.getPictures(rightCat.id);
-    this.getPictures(rightCat.id);
-    this.getPictures(rightCat.id);
-    
-    while (wrongCat1 === rightCat) {
-      wrongCat1 = this.getRandomCat();
-    }
-    while (wrongCat2 === rightCat || wrongCat2 === wrongCat1) {
-      wrongCat2 = this.getRandomCat();
-    }
-    
-    this.setState({
-      rightCat,
-      wrongCat1,
-      wrongCat2,
-    })
-  }
-  
-  getPictures = (type) => {
-    fetch(`https://api.thecatapi.com/v1/images/search?breed_id=${type}`, {
+  const getPictures = async (type) => {
+    const response1 = await axios.get(`https://api.thecatapi.com/v1/images/search?breed_id=${type}`, {
       headers: {
         'x-api-key': API_KEY,
-      }  
-    })
-    .then(response => response.json())
-    .then(result => result[0].url)
-    .then(url => this.setState({ pictures: [...this.state.pictures, url] }));
+      }
+    });
+    const picture1 = await response1.data[0].url;
+
+    const response2 = await axios.get(`https://api.thecatapi.com/v1/images/search?breed_id=${type}`, {
+      headers: {
+        'x-api-key': API_KEY,
+      }
+    });
+    const picture2 = await response2.data[0].url;
+
+    const response3 = await axios.get(`https://api.thecatapi.com/v1/images/search?breed_id=${type}`, {
+      headers: {
+        'x-api-key': API_KEY,
+      }
+    });
+    const picture3 = await response3.data[0].url;
+
+    setPictures([picture1, picture2, picture3]);
+
+  }
+
+  const getRandomCat = () => {
+    return cats[Math.floor(Math.random() * cats.length)];
   }
   
-  verifyAnswer = (answer) => {
-    this.setState({ answered: true, timer: clearTimeout(this.state.timer) });
-    if (answer === this.state.rightCat.name) {
-      this.setState({
-        rightAnswers: this.state.rightAnswers + 1,
-        message: 'That\'s correct!',
-      });
+  const populateAnswers = async () => {
+    let right = getRandomCat();
+    let wrong1 = getRandomCat();
+    let wrong2 = getRandomCat();
+    
+    getPictures(right.id);
+    
+    while (wrong1 === right) {
+      wrong1 = getRandomCat();
+    }
+    while (wrong2 === right || wrong2 === wrong1) {
+      wrong2 = getRandomCat();
+    }
+
+    setRightCat(right);
+    setWrongCat1(wrong1);
+    setWrongCat2(wrong2);
+    setAnswers(shuffle([right.name, wrong1.name, wrong2.name]));
+  }
+  
+  
+  const verifyAnswer = (answer) => {
+    setAnswered(true);
+    setTimer(clearTimeout(timer));
+
+    if (answer === rightCat.name) {
+        setRightAnswers(rightAnswers + 1);
+        setMessage('That\'s correct!');
     } else {
-      this.setState({
-        wrongAnswers: this.state.wrongAnswers + 1,
-        message: 'Unfortunately your answer is wrong!',
-      });
-      
+        setWrongAnswers(wrongAnswers + 1);
+        setMessage('Unfortunately your answer is wrong!');
     }
     
     if (answer === 'timeout') {
-      this.setState({ message: 'Time\'s up! Speed up your cat reflexes!'})
+      setMessage('Time\'s up! Speed up your cat reflexes!');
     }
     
-    if (this.state.round === 5) {
-      this.setState({ round: this.state.round + 1 });
+    if (round === 5) {
+      setRound(round + 1);
     }
   }
 
-  shuffle = (array) => {
+  const shuffle = (array) => {
       for (let i = array.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [array[i], array[j]] = [array[j], array[i]];
@@ -133,31 +138,26 @@ class Play extends Component {
       return array;
   }
   
-  render() {
-    const { rightAnswers, wrongAnswers, round, pictures, rightCat, wrongCat1, wrongCat2, answered, message } = this.state;
-    const answers = this.shuffle([rightCat.name, wrongCat1.name, wrongCat2.name]);
-  
-      return (
-        <div>
-          {
-          this.state.round > 5 ? <FinalScore rightAnswers={rightAnswers} round={round} newGame={this.newGame.bind(this)}/> :
+  return (
+    <div>
+      {
+      round > 5 ? <FinalScore rightAnswers={rightAnswers} round={round} newGame={newGame}/> :
 
-          pictures.length > 0 ? (<div style={style.background}>
-          <Score rightAnswers={rightAnswers} wrongAnswers={wrongAnswers} round={round} />
-          { !answered ? (<div style={style.background}>
-          <h3 style={style.white}>What type of cat is on the pictures? You have 10 seconds to choose!</h3>
-          <Pictures firstUrl={pictures[0]} secondUrl={pictures[1]} thirdUrl={pictures[2]} /> <br/>
-          <Button onclick={this.verifyAnswer.bind(this, answers[0])} text={answers[0]}/>
-          <Button onclick={this.verifyAnswer.bind(this, answers[1])} text={answers[1]}/>
-          <Button onclick={this.verifyAnswer.bind(this, answers[2])} text={answers[2]}/> </div>)
-          : <div> {message.length > 0 && <h2 style={style.white}>{message}</h2>}
-          <Button onclick={this.newRound.bind(this)} text='Next Question' /></div> }
-          </div>) 
-          : <Loading />
-          }
-        </div>
-      )
-  }
+      pictures.length > 0 ? (<div style={style.background}>
+      <Score rightAnswers={rightAnswers} wrongAnswers={wrongAnswers} round={round} />
+      { !answered ? (<div style={style.background}>
+      <h3 style={style.white}>What type of cat is on the pictures? You have 10 seconds to choose!</h3>
+      <Pictures firstUrl={pictures[0]} secondUrl={pictures[1]} thirdUrl={pictures[2]} /> <br/>
+      <Button onclick={() => verifyAnswer(answers[0])} text={answers[0]}/>
+      <Button onclick={() => verifyAnswer(answers[1])} text={answers[1]}/>
+      <Button onclick={() => verifyAnswer(answers[2])} text={answers[2]}/> </div>)
+      : <div> {message.length > 0 && <h2 style={style.white}>{message}</h2>}
+      <Button onclick={newRound} text='Next Question' /></div> }
+      </div>) 
+      : <Loading />
+      }
+    </div>
+  )
 }
 
 export default Play;

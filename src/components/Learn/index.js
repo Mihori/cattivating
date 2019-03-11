@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import Radium from 'radium';
 
 const style = {
@@ -42,44 +42,35 @@ const style = {
   }
 }
 
-class Learn extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      cats: props.cats,
-      data: '',
-    }
-  }
+const Learn = props => {
+  const cats = props.cats;
+  const [cat, setCat] = useState({});
 
-  setData = (cat) => {
-    this.setState({ data: cat });
-  }
+  const selectCat = cat => setCat(cat);
 
-  render() {
-    return (
-  <div style={style.generic}>
-    <h2>This section is under construction! Please come back later.</h2>
-    <h3>Choose one type for more information.</h3>
-    <div style={style.buttons}>
-      {this.state.cats.map(cat => 
-      <button onClick={this.setData.bind(this, cat)}
-              style={style.button} 
-              key={cat.id}>
-              {cat.name}
-      </button>)}
+  return (
+    <div style={style.generic}>
+      <h2>This section is under construction! Please come back later.</h2>
+      <h3>Choose one type for more information.</h3>
+      <div style={style.buttons}>
+        {cats.map(cat => 
+        <button onClick={selectCat.bind(null, cat)}
+                style={style.button} 
+                key={cat.id}>
+                {cat.name}
+        </button>)}
+      </div>
+      {cat && (
+      <div style={{ backgroundColor: '#360d49' }}>
+        <h2>{cat.name}</h2>
+        <h3>Origin: {cat.info.origin}</h3>
+        <h3>Temper: {cat.info.temper}</h3>
+        <h5 style={style.desc}>{cat.info.desc}</h5>
+        <h3><a style={style.a} href={cat.info.wiki}>Wish to know more? Click on me!</a></h3>
+      </div>
+      )}
     </div>
-    {this.state.data && (
-    <div style={{ backgroundColor: '#360d49' }}>
-      <h2>{this.state.data.name}</h2>
-      <h3>Origin: {this.state.data.info.origin}</h3>
-      <h3>Temper: {this.state.data.info.temper}</h3>
-      <h5 style={style.desc}>{this.state.data.info.desc}</h5>
-      <h3><a style={style.a} href={this.state.data.info.wiki}>Wish to know more? Click on me!</a></h3>
-    </div>
-    )}
-  </div>
-    )
-  }
+  )
 }
 
 export default Radium(Learn);
