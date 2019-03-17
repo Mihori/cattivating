@@ -58,37 +58,27 @@ const Play = (props) => {
     }, 10000));
   }
   
-  const getPictures = async (type) => {
-    const response1 = await axios.get(`https://api.thecatapi.com/v1/images/search?breed_id=${type}`, {
+  const getPicture = async (type) => {
+    const response = await axios.get(`https://api.thecatapi.com/v1/images/search?breed_id=${type}`, {
       headers: {
         'x-api-key': API_KEY,
       }
     });
-    const picture1 = await response1.data[0].url;
+    const picture = await response.data[0].url;
 
-    const response2 = await axios.get(`https://api.thecatapi.com/v1/images/search?breed_id=${type}`, {
-      headers: {
-        'x-api-key': API_KEY,
-      }
-    });
-    const picture2 = await response2.data[0].url;
+      return picture;
+  }
 
-    const response3 = await axios.get(`https://api.thecatapi.com/v1/images/search?breed_id=${type}`, {
-      headers: {
-        'x-api-key': API_KEY,
-      }
-    });
-    const picture3 = await response3.data[0].url;
-
-    setPictures([picture1, picture2, picture3]);
-
+  const getPictures = (type) => {
+    Promise.all([getPicture(type), getPicture(type), getPicture(type)])
+      .then(pictures => setPictures(pictures))
   }
 
   const getRandomCat = () => {
     return cats[Math.floor(Math.random() * cats.length)];
   }
   
-  const populateAnswers = async () => {
+  const populateAnswers = () => {
     let right = getRandomCat();
     let wrong1 = getRandomCat();
     let wrong2 = getRandomCat();

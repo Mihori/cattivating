@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Radium from 'radium';
 
 const style = {
   generic: {
@@ -22,15 +21,15 @@ const style = {
     backgroundColor: '#1b0624',
     color: 'white',
     border: 'none',
-    ':hover': {
-      cursor: 'pointer',
-    },
-    ':focus': {
-      outline: 'none',
-      border: 'none',
-      color: '#c914b9',
-      fontSize: '16px',
-    },
+    // ':hover': {
+    //   cursor: 'pointer',
+    // },
+    // ':focus': {
+    //   outline: 'none',
+    //   border: 'none',
+    //   color: '#c914b9',
+    //   fontSize: '16px',
+    // },
   },
   desc: {
     width: '75%',
@@ -46,21 +45,18 @@ const Learn = props => {
   const cats = props.cats;
   const [cat, setCat] = useState({});
 
-  const selectCat = cat => setCat(cat);
-
   return (
     <div style={style.generic}>
-      <h2>This section is under construction! Please come back later.</h2>
       <h3>Choose one type for more information.</h3>
       <div style={style.buttons}>
         {cats.map(cat => 
-        <button onClick={selectCat.bind(null, cat)}
+        <button onClick={() => setCat(cat)}
                 style={style.button} 
                 key={cat.id}>
                 {cat.name}
         </button>)}
       </div>
-      {cat && (
+      {cat.info && (
       <div style={{ backgroundColor: '#360d49' }}>
         <h2>{cat.name}</h2>
         <h3>Origin: {cat.info.origin}</h3>
@@ -73,4 +69,4 @@ const Learn = props => {
   )
 }
 
-export default Radium(Learn);
+export default Learn;
